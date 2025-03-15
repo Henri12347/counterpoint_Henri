@@ -98,3 +98,52 @@ if __name__ == "__main__":
     trump_card = deck.reveal_trump()
     print(f"\nTrump Card: {trump_card if trump_card else 'No Trump (Joker or Nine)'}")
     print("\nSetup complete. Ready for bidding phase!")
+
+# Bidding Phase
+print("\nBidding Phase: Each player must discard 3 cards to set their bid.")
+bids = {}
+
+for player in players:
+    print(f"\n{player.name}'s Turn to Bid:")
+    player.display_hand()
+
+    discarded_cards = []
+    for i in range(3):
+        while True:
+            try:
+                choice = int(input(f"Select a card to discard (1-{len(player.hand)}): ")) - 1
+                if 0 <= choice < len(player.hand):
+                    discarded_cards.append(player.hand.pop(choice))
+                    break
+                else:
+                    print("Invalid choice, select a valid card number.")
+            except ValueError:
+                print("Please enter a valid number.")
+
+    # Calculate bid based on discarded cards' suits
+    bid_value = sum(10 if card.suit == "Spades" else 20 if card.suit == "Hearts"
+                    else 30 if card.suit == "Clubs" else 0 for card in discarded_cards)
+
+    bids[player.name] = bid_value
+    player.bid = bid_value
+
+    print(f"{player.name} bid {bid_value} points.")
+    print("=" * 25)
+
+# Turn Management
+turn_index = 0
+print("\nGame Begins! Players will take turns.")
+while True:
+    current_player = players[turn_index]
+    print(f"\n{current_player.name}'s turn!")
+    
+    # Here, you would implement trick-taking logic.
+    
+    # Cycle to the next player
+    turn_index = (turn_index + 1) % len(players)
+
+    # Temporary stop condition (for testing)
+    if input("Continue? (y/n): ").strip().lower() != 'y':
+        break
+
+print("\nGame session ended.")
