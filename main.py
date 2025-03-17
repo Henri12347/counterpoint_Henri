@@ -132,18 +132,51 @@ for player in players:
 
 # Turn Management
 turn_index = 0
-print("\nGame Begins! Players will take turns.")
-while True:
-    current_player = players[turn_index]
-    print(f"\n{current_player.name}'s turn!")
-    
-    # Here, you would implement trick-taking logic.
-    
-    # Cycle to the next player
-    turn_index = (turn_index + 1) % len(players)
 
-    # Temporary stop condition (for testing)
-    if input("Continue? (y/n): ").strip().lower() != 'y':
-        break
 
-print("\nGame session ended.")
+
+# Trick-Taking Phase
+print("\nTrick-Taking Phase Begins!")
+
+tricks_won = {player.name: 0 for player in players}
+
+for trick in range(9):  # 9 tricks per round
+    print(f"\n--- Trick {trick + 1} ---")
+    played_cards = []
+
+    # Each player plays a card
+    for i, player in enumerate(players):
+        print(f"\n{player.name}'s Turn:")
+        player.display_hand()
+        
+        while True:
+            try:
+                choice = int(input(f"Select a card to play (1-{len(player.hand)}): ")) - 1
+                if 0 <= choice < len(player.hand):
+                    played_card = player.hand.pop(choice)
+                    played_cards.append((player, played_card))
+                    print(f"{player.name} played {played_card}")
+                    break
+                else:
+                    print("Invalid choice, select a valid card number.")
+            except ValueError:
+                print("Please enter a valid number.")
+
+    # Determine trick winner
+    lead_suit = played_cards[0][1].suit
+    highest_card = played_cards[0]
+    
+    for player, card in played_cards[1:]:
+        if card.suit == lead_suit and card.point_value > highest_card[1].point_value:
+            highest_card = (player, card)
+        elif trump_card and card.suit == trump_card.suit and highest_card[1].suit != trump_card.suit:
+            highest_card = (player, card)
+
+    winner = highest_card[0]
+    tricks_won[winner.name] += 1
+    print(f"\n{winner.name} wins Trick {trick + 1} with {highest_card[1]}!")
+
+# Display results
+print("\n--- Trick-Taking Phase Complete! ---")
+for player in players:
+    print(f"{player.name} won {tricks_won[player.name]} tricks.")
