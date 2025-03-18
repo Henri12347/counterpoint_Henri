@@ -180,3 +180,46 @@ for trick in range(9):  # 9 tricks per round
 print("\n--- Trick-Taking Phase Complete! ---")
 for player in players:
     print(f"{player.name} won {tricks_won[player.name]} tricks.")
+
+# Final Scoring Phase
+print("\n--- Final Scoring Phase ---")
+differences = {}
+
+# Calculate differences between bid and tricks won
+for player in players:
+    bid = player.bid
+    tricks = tricks_won[player.name] * 10  # Each trick is worth 10 card-points
+    difference = abs(bid - tricks)
+    differences[player.name] = difference  # Store difference for scoring
+    print(f"{player.name} bid {bid}, won {tricks} card-points. Difference: {difference}")
+
+# Calculate final scores
+for player in players:
+    print(f"\nCalculating score for {player.name}:")
+    opponent_diffs = [differences[opponent.name] for opponent in players if opponent != player]
+    base_score = sum(opponent_diffs)
+    print(f"Sum of opponents' differences: {' + '.join(map(str, opponent_diffs))} = {base_score}")
+
+    # Apply bonuses
+    bonus = 0
+    if differences[player.name] == 0:
+        bonus = 30
+        print(f"Bonus: Exact bid made (+30)")
+    elif differences[player.name] <= 2:
+        bonus = 20
+        print(f"Bonus: Within 2 card-points (+20)")
+    elif differences[player.name] <= 5:
+        bonus = 10
+        print(f"Bonus: Within 5 card-points (+10)")
+    
+    total_score = base_score + bonus
+    player.score += total_score
+    print(f"Final score for {player.name}: {base_score} + {bonus} = {total_score}")
+
+# Determine Winner
+winner = max(players, key=lambda p: p.score)
+print(f"\n🏆 {winner.name} is the winner with {winner.score} points! 🏆")
+
+# Dealer Rotation
+players.append(players.pop(0))  # Move dealer to the end of the list
+print(f"\nNext round dealer: {players[0].name}")
