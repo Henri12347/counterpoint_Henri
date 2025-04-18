@@ -77,6 +77,7 @@ class CounterPointGame:
         self.current_player_index = 0
         self.tricks_won = {}
         self.bids = {}
+        self.bid_cards = {}  # Store bid cards for each player
         self.current_trick = []
         self.current_phase = "welcome"
         self.target_score = None
@@ -92,58 +93,158 @@ class CounterPointGame:
         for widget in self.root.winfo_children():
             widget.destroy()
             
-        welcome_frame = tk.Frame(self.root)
-        welcome_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        # Create a frame to hold the background and buttons
+        main_frame = tk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        main_frame.configure(bg="White")  # Use system default for pseudo-transparency
         
-        tk.Label(welcome_frame, text="CounterPoint", font=("Arial", 24, "bold")).pack(pady=20)
+        # Create a label for the background image
+        bg_label = tk.Label(main_frame)
+        bg_label.place(relx=0.5, rely=0.5, anchor="center")
+        bg_label.configure(bg="White")
         
-        tk.Button(welcome_frame, text="Start Game", font=("Arial", 14),
-                  command=self.get_game_settings, width=15, height=2).pack(pady=10)
+        def resize_background(event=None):
+            try:
+                folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+                img_path = os.path.join(folder_path, "background.png")
+                img = Image.open(img_path)
+                # Resize image to fit current window size while maintaining aspect ratio
+                window_width = max(self.root.winfo_width(), 1)
+                window_height = max(self.root.winfo_height(), 1)
+                img_width, img_height = img.size
+                scale = min(window_width/img_width, window_height/img_height)
+                new_size = (int(img_width * scale), int(img_height * scale))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+                self.bg_image = ImageTk.PhotoImage(img)
+                if bg_label.winfo_exists():
+                    bg_label.configure(image=self.bg_image)
+            except Exception as e:
+                print(f"Error loading background.png: {e}")
+            if main_frame.winfo_exists():
+                main_frame.configure(bg="#f8f8f8")
+            if bg_label.winfo_exists():
+                bg_label.configure(bg="#f8f8f8")
         
-        tk.Button(welcome_frame, text="Game Rules", font=("Arial", 14),
-                  command=self.show_help, width=15, height=2).pack(pady=10)
+        # Configure buttons with custom color
+        button_style = {"font": ("Arial", 14), "bg": "#f5e1bf", "width": 15, "height": 2}
+
+        tk.Button(main_frame, text="Start Game", command=self.get_game_settings, **button_style).place(relx=0.5, rely=0.4, anchor="center")
+        tk.Button(main_frame, text="Game Rules", command=self.show_help, **button_style).place(relx=0.5, rely=0.5, anchor="center")
+        tk.Button(main_frame, text="Exit", command=self.root.destroy, **button_style).place(relx=0.5, rely=0.6, anchor="center")
         
-        tk.Button(welcome_frame, text="Exit", font=("Arial", 14),
-                  command=self.root.destroy, width=15, height=2).pack(pady=10)
+        # Load initial background
+        self.root.after(100, resize_background)
 
     def get_game_settings(self):
-        for i in range(3):
-            name = simpledialog.askstring("Player Names", f"Enter name for Player {i+1}:", parent=self.root)
-            if name:
-                self.player_names[i] = name
-            else:
-                self.player_names[i] = f"Player {i+1}"
+        self.current_phase = "player_names"
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        names_frame = tk.Frame(self.root)
+        names_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
+        tk.Label(names_frame, text="Enter Player Names", font=("Arial", 20, "bold")).pack(pady=20)
+        
+        # Player 1
+        tk.Label(names_frame, text="Choose a name for Player 1:", font=("Arial", 14)).pack(pady=5)
+        player1_entry = tk.Entry(names_frame, font=("Arial", 14), width=20)
+        player1_entry.pack(pady=5)
+        player1_entry.focus_set()
+        
+        # Player 2
+        tk.Label(names_frame, text="Choose a name for Player 2:", font=("Arial", 14)).pack(pady=5)
+        player2_entry = tk.Entry(names_frame, font=("Arial", 14), width=20)
+        player2_entry.pack(pady=5)
+        
+        # Player 3
+        tk.Label(names_frame, text="Choose a name for Player 3:", font=("Arial", 14)).pack(pady=5)
+        player3_entry = tk.Entry(names_frame, font=("Arial", 14), width=20)
+        player3_entry.pack(pady=5)
+        
+        def submit_names():
+            # Get names from entries, default to "Player X" if empty
+            self.player_names[0] = player1_entry.get().strip() or "Player 1"
+            self.player_names[1] = player2_entry.get().strip() or "Player 2"
+            self.player_names[2] = player3_entry.get().strip() or "Player 3"
+            self.show_win_condition_screen()
+        
+        tk.Button(names_frame, text="Continue", font=("Arial", 14),
+                  command=submit_names, width=15, height=2).pack(pady=20)
 
-        win_dialog = tk.Toplevel(self.root)
-        win_dialog.title("Winning Condition")
-        win_dialog.geometry("300x200")
-        win_dialog.transient(self.root)
-        win_dialog.grab_set()
+    def show_win_condition_screen(self):
+        self.current_phase = "win_condition"
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        win_frame = tk.Frame(self.root)
+        win_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
+        tk.Label(win_frame, text="Choose Winning Condition", font=("Arial", 20, "bold")).pack(pady=20)
+        
+        tk.Button(win_frame, text="Target Score", font=("Arial", 14),
+                  command=lambda: self.set_win_condition(1), width=15, height=2).pack(pady=10)
+        
+        tk.Button(win_frame, text="Set Rounds", font=("Arial", 14),
+                  command=lambda: self.set_win_condition(2), width=15, height=2).pack(pady=10)
 
-        tk.Label(win_dialog, text="Choose the winning condition:", font=("Arial", 12)).pack(pady=10)
-        tk.Button(win_dialog, text="Target Score", command=lambda: self.set_win_condition(1, win_dialog)).pack(pady=5)
-        tk.Button(win_dialog, text="Set Rounds", command=lambda: self.set_win_condition(2, win_dialog)).pack(pady=5)
-
-    def set_win_condition(self, condition, dialog):
+    def set_win_condition(self, condition):
         self.win_condition = condition
-        dialog.destroy()
+        self.current_phase = "input_condition"
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        input_frame = tk.Frame(self.root)
+        input_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
         if condition == 1:
-            while True:
-                score = simpledialog.askinteger("Target Score", "Enter target score to win:", parent=self.root)
-                if score and score > 0:
-                    self.target_score = score
-                    break
-                messagebox.showerror("Error", "Target score must be a positive number.")
+            tk.Label(input_frame, text="Enter Target Score", font=("Arial", 20, "bold")).pack(pady=20)
+            tk.Label(input_frame, text="Enter a positive number", font=("Arial", 14)).pack(pady=5)
+            
+            score_entry = tk.Entry(input_frame, font=("Arial", 14), width=10)
+            score_entry.pack(pady=10)
+            score_entry.focus_set()
+            
+            def submit_score():
+                try:
+                    score = int(score_entry.get())
+                    if score > 0:
+                        self.target_score = score
+                        self.initialize_game()
+                    else:
+                        messagebox.showerror("Error", "Target score must be a positive number.")
+                except ValueError:
+                    messagebox.showerror("Error", "Please enter a valid number.")
+            
+            tk.Button(input_frame, text="Submit", font=("Arial", 14),
+                      command=submit_score, width=15, height=2).pack(pady=10)
+            
+            tk.Button(input_frame, text="Back", font=("Arial", 14),
+                      command=self.show_win_condition_screen, width=15, height=2).pack(pady=10)
+            
         elif condition == 2:
-            while True:
-                rounds = simpledialog.askinteger("Number of Rounds", "Enter number of rounds (1 or multiple of 3):", parent=self.root)
-                if rounds and (rounds == 1 or (rounds > 0 and rounds % 3 == 0)):
-                    self.max_rounds = rounds
-                    break
-                messagebox.showerror("Error", "Number of rounds must be 1 or a positive number divisible by 3.")
-        
-        self.initialize_game()
+            tk.Label(input_frame, text="Enter Number of Rounds", font=("Arial", 20, "bold")).pack(pady=20)
+            tk.Label(input_frame, text="Enter 1 or a number divisible by 3", font=("Arial", 14)).pack(pady=5)
+            
+            rounds_entry = tk.Entry(input_frame, font=("Arial", 14), width=10)
+            rounds_entry.pack(pady=10)
+            rounds_entry.focus_set()
+            
+            def submit_rounds():
+                try:
+                    rounds = int(rounds_entry.get())
+                    if rounds == 1 or (rounds > 0 and rounds % 3 == 0):
+                        self.max_rounds = rounds
+                        self.initialize_game()
+                    else:
+                        messagebox.showerror("Error", "Number of rounds must be 1 or a positive number divisible by 3.")
+                except ValueError:
+                    messagebox.showerror("Error", "Please enter a valid number.")
+            
+            tk.Button(input_frame, text="Submit", font=("Arial", 14),
+                      command=submit_rounds, width=15, height=2).pack(pady=10)
+            
+            tk.Button(input_frame, text="Back", font=("Arial", 14),
+                      command=self.show_win_condition_screen, width=15, height=2).pack(pady=10)
 
     def initialize_game(self):
         self.players = [Player(name) for name in self.player_names]
@@ -250,7 +351,7 @@ class CounterPointGame:
         else:
             tk.Label(trump_frame, text=str(self.trump_card), width=5, height=7, relief="raised", bg="white").pack(side="left")
         
-        info_text = "No Trump Suit" if (rank == "Nine" or rank == "Joker") else f"The trump suit is: {suit.upper()}"
+        info_text = "No Trump Suit" if (rank == "Nine" or rank == "Joker") else f"Trump Suit: {suit.upper()}"
         tk.Label(self.center_frame, text=info_text, font=("Arial", 14), bg="#f8f8f8").pack(pady=5)
         
         self.turn_label = tk.Label(self.center_frame, text=f"Turn: {self.player_names[self.current_player_index]}", 
@@ -261,10 +362,61 @@ class CounterPointGame:
         self.trick_frame.pack(pady=20, fill=tk.BOTH, expand=True)
         self.trick_frame.pack_propagate(False)
         
-        tk.Label(self.trick_frame, text=f"Trick {self.current_trick_number}", font=("Arial", 12), bg="#e0f0e0").pack(pady=10)
+        trick_label_text = "Selected Cards" if self.current_phase == "bidding" else f"Trick {self.current_trick_number}"
+        tk.Label(self.trick_frame, text=trick_label_text, font=("Arial", 12), bg="#e0f0e0").pack(pady=5)
         
         self.played_cards_frame = tk.Frame(self.trick_frame, bg="#e0f0e0")
-        self.played_cards_frame.pack(pady=10, expand=True)
+        self.played_cards_frame.pack(fill=tk.BOTH, expand=True)
+        self.played_cards_frame.grid_columnconfigure(0, weight=1)
+        self.played_cards_frame.grid_columnconfigure(1, weight=1)
+        self.played_cards_frame.grid_columnconfigure(2, weight=1)
+        self.played_cards_frame.grid_rowconfigure(0, weight=1)
+
+        # Create sub-frames for left, center, and right
+        self.left_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+        self.left_frame.grid(row=0, column=0, sticky="n")
+        
+        self.current_cards_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+        self.current_cards_frame.grid(row=0, column=1, sticky="n")
+        
+        self.right_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+        self.right_frame.grid(row=0, column=2, sticky="n")
+
+        # Display previous players' bid or trick cards
+        if self.current_phase == "bidding":
+            for i in range(self.current_player_index):
+                player_name = self.player_names[i]
+                if player_name in self.bid_cards:
+                    target_frame = self.left_frame if i == 0 else self.right_frame
+                    frame = tk.Frame(target_frame, bg="#e0f0e0")
+                    frame.pack(pady=5)
+                    tk.Label(frame, text=f"{player_name}'s Bid", font=("Arial", 10), bg="#e0f0e0").pack()
+                    cards_frame = tk.Frame(frame, bg="#e0f0e0")
+                    cards_frame.pack()
+                    for card in self.bid_cards[player_name]:
+                        rank = card.rank
+                        suit = card.suit if card.suit != "Joker" else None
+                        img = self.load_card_image(rank, suit, size=(60, 90))
+                        if img:
+                            self.card_images.append(img)
+                            tk.Label(cards_frame, image=img, bg="#e0f0e0").pack(side=tk.LEFT, padx=2)
+                        else:
+                            tk.Label(cards_frame, text=str(card), bg="#e0f0e0").pack(side=tk.LEFT, padx=2)
+        elif self.current_phase == "trick":
+            for i, (player, card) in enumerate(self.current_trick):
+                player_name = player.name
+                target_frame = self.left_frame if i == 0 else self.right_frame
+                frame = tk.Frame(target_frame, bg="#e0f0e0")
+                frame.pack(pady=5)
+                tk.Label(frame, text=f"{player_name}'s Card", font=("Arial", 10), bg="#e0f0e0").pack()
+                rank = card.rank
+                suit = card.suit if card.suit != "Joker" else None
+                img = self.load_card_image(rank, suit, size=(60, 90))
+                if img:
+                    self.card_images.append(img)
+                    tk.Label(frame, image=img, bg="#e0f0e0").pack(pady=2)
+                else:
+                    tk.Label(frame, text=str(card), bg="#e0f0e0").pack(pady=2)
 
         self.update_player_hand()
         if self.current_phase == "bidding":
@@ -287,11 +439,23 @@ class CounterPointGame:
         
         player = self.players[self.current_player_index]
         hand = [(card.rank, card.suit if card.suit != "Joker" else None, card) for card in player.hand]
+        self.card_buttons = []  # Store card buttons for enabling/disabling
         self.create_scrollable_cards(self.bottom_frame, hand, vertical=False, interactive=True)
+        
+        if self.current_phase == "bidding":
+            # Add Submit Bid button to the right of the cards
+            self.submit_bid_button = tk.Button(self.bottom_frame, text="Submit Bid", font=("Arial", 12),
+                                               command=self.submit_bid, width=15, height=2, state="disabled")
+            self.submit_bid_button.pack(side=tk.RIGHT, padx=10)
+        elif self.current_phase == "trick":
+            # Add Play Card button to the right of the cards
+            self.play_card_button = tk.Button(self.bottom_frame, text="Play Card", font=("Arial", 12),
+                                              command=self.submit_trick_card, width=15, height=2, state="disabled")
+            self.play_card_button.pack(side=tk.RIGHT, padx=10)
 
     def create_scrollable_cards(self, parent, cards, vertical=False, interactive=False):
         canvas_frame = tk.Frame(parent)
-        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         canvas = tk.Canvas(canvas_frame)
         
@@ -322,6 +486,8 @@ class CounterPointGame:
                 if interactive:
                     card_btn = tk.Button(cards_frame, image=img, relief="raised")
                     card_btn.config(command=lambda b=card_btn, c=card_obj: on_card_click(b, c))
+                    card_btn._card_obj = card_obj  # Store card_obj for identification
+                    self.card_buttons.append(card_btn)  # Store button for enabling/disabling
                     if vertical:
                         card_btn.pack(pady=2)
                     else:
@@ -389,56 +555,223 @@ class CounterPointGame:
 
     def handle_bidding(self):
         player = self.players[self.current_player_index]
-        self.turn_label.config(text=f"Turn: {player.name} - Select 3 cards to discard for bidding")
+        self.turn_label.config(text=f"Turn: {player.name} - Select 3 cards to bid")
         self.discarded_cards = []
         self.discard_count = 0
+        # Clear only the current player's selection area
+        for widget in self.current_cards_frame.winfo_children():
+            widget.destroy()
 
     def handle_bid_card(self, card_btn, card_obj):
-        if self.discard_count < 3 and card_obj in self.players[self.current_player_index].hand:
-            self.discarded_cards.append(card_obj)
-            self.discard_count += 1
-            card_btn.config(state="disabled", relief="sunken")
-            if self.discard_count == 3:
-                player = self.players[self.current_player_index]
-                bid_value = sum(10 if card.suit == "Spades" else 20 if card.suit == "Hearts"
-                               else 30 if card.suit == "Clubs" else 0 for card in self.discarded_cards)
-                player.hand = [card for card in player.hand if card not in self.discarded_cards]
-                self.bids[player.name] = bid_value
-                player.bid = bid_value
-                messagebox.showinfo("Bid", f"{player.name} bid {bid_value} points.")
-                self.current_player_index += 1
-                if self.current_player_index < 3:
-                    self.prompt_next_player()
+        if self.current_phase != "bidding" or card_obj not in self.players[self.current_player_index].hand:
+            return
+        
+        if card_obj in self.discarded_cards:
+            # Deselect the card
+            self.discarded_cards.remove(card_obj)
+            self.discard_count -= 1
+            card_btn.config(relief="raised", bg="SystemButtonFace")
+            # Remove the card from the current_cards_frame
+            for widget in self.current_cards_frame.winfo_children():
+                if hasattr(widget, "_card_obj") and widget._card_obj == card_obj:
+                    widget.destroy()
+        else:
+            # Select the card if less than 3 are selected
+            if self.discard_count < 3:
+                self.discarded_cards.append(card_obj)
+                self.discard_count += 1
+                card_btn.config(relief="sunken", bg="#d0d0d0")
+                # Display the card in the current_cards_frame horizontally
+                rank = card_obj.rank
+                suit = card_obj.suit if card_obj.suit != "Joker" else None
+                img = self.load_card_image(rank, suit, size=(60, 90))
+                if img:
+                    self.card_images.append(img)
+                    card_label = tk.Label(self.current_cards_frame, image=img, bg="#e0f0e0")
+                    card_label._card_obj = card_obj  # Store card_obj for identification
+                    card_label.pack(side=tk.LEFT, padx=5)
                 else:
-                    self.start_trick_phase()
+                    card_label = tk.Label(self.current_cards_frame, text=str(card_obj), bg="#e0f0e0")
+                    card_label._card_obj = card_obj
+                    card_label.pack(side=tk.LEFT, padx=5)
+        
+        # Enable/disable Submit Bid button based on discard_count
+        if hasattr(self, 'submit_bid_button'):
+            self.submit_bid_button.config(state="normal" if self.discard_count == 3 else "disabled")
+
+    def submit_bid(self):
+        if self.discard_count != 3:
+            return
+        
+        player = self.players[self.current_player_index]
+        bid_value = sum(10 if card.suit == "Spades" else 20 if card.suit == "Hearts"
+                        else 30 if card.suit == "Clubs" else 0 for card in self.discarded_cards)
+        player.hand = [card for card in player.hand if card not in self.discarded_cards]
+        self.bids[player.name] = bid_value
+        player.bid = bid_value
+        self.bid_cards[player.name] = self.discarded_cards[:]  # Store bid cards
+        
+        # Clear the current player's selection area
+        for widget in self.played_cards_frame.winfo_children():
+            if not widget.winfo_children():
+                widget.destroy()
+        
+        self.current_player_index += 1
+        if self.current_player_index < 3:
+            next_player = self.players[self.current_player_index]
+            message = f"{player.name} bid {bid_value} points.\nPlease pass to {next_player.name} to bid."
+            self.show_custom_dialog("Bid Result", message, lambda: self.prompt_next_player())
+        else:
+            message = f"{player.name} bid {bid_value} points."
+            self.show_custom_dialog("Bid Result", message, lambda: self.start_trick_phase())
 
     def prompt_next_player(self):
-        next_player = self.players[self.current_player_index]
-        messagebox.showinfo("Next Player", f"Please pass to {next_player.name} to bid.")
         self.setup_game_ui()
+
+    def show_custom_dialog(self, title, message, on_close):
+        dialog = tk.Toplevel(self.root)
+        dialog.title(title)
+        dialog.geometry("300x150")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog relative to the root window
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{x}+{y}")
+        
+        tk.Label(dialog, text=message, font=("Arial", 12), wraplength=250).pack(pady=20)
+        
+        tk.Button(dialog, text="Continue", font=("Arial", 12),
+                  command=lambda: [dialog.destroy(), on_close()]).pack(pady=10)
+        
+        dialog.protocol("WM_DELETE_WINDOW", lambda: [dialog.destroy(), on_close()])
 
     def start_trick_phase(self):
         self.current_phase = "trick"
         self.current_trick_number = 1
         self.current_player_index = 0
         self.current_trick = []
-        for widget in self.played_cards_frame.winfo_children():
-            widget.destroy()
-        tk.Label(self.trick_frame, text=f"Trick {self.current_trick_number}", font=("Arial", 12), bg="#e0f0e0").pack(pady=10)
-        self.handle_trick()
+        self.setup_game_ui()  # This will call handle_trick() too
 
     def handle_trick(self):
         player = self.players[self.current_player_index]
-        self.turn_label.config(text=f"Turn: {player.name} - Play a card for Trick {self.current_trick_number}")
+        self.turn_label.config(text=f"Turn: {player.name} - Select a card for Trick {self.current_trick_number}")
+        self.selected_trick_card = None
+        # Clear only the current player's selection area
+        for widget in self.current_cards_frame.winfo_children():
+            widget.destroy()
         self.update_player_hand()
+        
+        # Enforce follow suit rule
+        lead_suit = None
+        if self.current_trick:  # If not the first player in the trick
+            lead_suit = self.current_trick[0][1].suit if self.current_trick[0][1].suit != "Joker" else None
+        
+        if lead_suit:
+            # Check if player has cards of the lead suit
+            has_lead_suit = any(card.suit == lead_suit for card in player.hand)
+            if has_lead_suit:
+                # Disable cards that don't match the lead suit
+                for btn in self.card_buttons:
+                    card_obj = btn._card_obj
+                    if card_obj.suit != lead_suit:
+                        btn.config(state="disabled")
+                    else:
+                        btn.config(state="normal")
+            else:
+                # Enable all cards if player has no lead suit
+                for btn in self.card_buttons:
+                    btn.config(state="normal")
+        else:
+            # First player can play any card
+            for btn in self.card_buttons:
+                btn.config(state="normal")
 
     def handle_trick_card(self, card_btn, card_obj):
-        if card_obj in self.players[self.current_player_index].hand:
-            player = self.players[self.current_player_index]
-            player.hand.remove(card_obj)
-            self.current_trick.append((player, card_obj))
-            self.display_played_card(card_obj)
-            card_btn.config(state="disabled", relief="sunken")
+        if self.current_phase != "trick" or card_obj not in self.players[self.current_player_index].hand:
+            return
+        
+        # Check if the card follows suit
+        lead_suit = None
+        if self.current_trick:  # If not the first player in the trick
+            lead_suit = self.current_trick[0][1].suit if self.current_trick[0][1].suit != "Joker" else None
+        
+        if lead_suit:
+            has_lead_suit = any(card.suit == lead_suit for card in self.players[self.current_player_index].hand)
+            if has_lead_suit and card_obj.suit != lead_suit:
+                return  # Prevent selecting a card that doesn't follow suit
+        
+        if card_obj == self.selected_trick_card:
+            # Deselect the card
+            self.selected_trick_card = None
+            card_btn.config(relief="raised", bg="SystemButtonFace", state="normal")
+            # Remove the card from the current_cards_frame
+            for widget in self.current_cards_frame.winfo_children():
+                if hasattr(widget, "_card_obj") and widget._card_obj == card_obj:
+                    widget.destroy()
+            # Re-enable valid cards based on lead suit
+            if lead_suit:
+                has_lead_suit = any(card.suit == lead_suit for card in self.players[self.current_player_index].hand)
+                if has_lead_suit:
+                    for btn in self.card_buttons:
+                        if btn._card_obj.suit == lead_suit:
+                            btn.config(state="normal")
+                        else:
+                            btn.config(state="disabled")
+                else:
+                    for btn in self.card_buttons:
+                        btn.config(state="normal")
+            else:
+                for btn in self.card_buttons:
+                    btn.config(state="normal")
+        else:
+            # Select the card, deselecting any previously selected card
+            if self.selected_trick_card:
+                # Reset the previously selected card's button
+                for btn in self.card_buttons:
+                    if hasattr(btn, "_card_obj") and btn._card_obj == self.selected_trick_card:
+                        btn.config(relief="raised", bg="SystemButtonFace", state="normal")
+                # Clear the current_cards_frame
+                for widget in self.current_cards_frame.winfo_children():
+                    if hasattr(widget, "_card_obj") and widget._card_obj == self.selected_trick_card:
+                        widget.destroy()
+            
+            self.selected_trick_card = card_obj
+            card_btn.config(relief="sunken", bg="#d0d0d0", state="normal")  # Keep selected card clickable
+            card_btn._card_obj = card_obj  # Store card_obj for identification
+            # Disable all other card buttons
+            for btn in self.card_buttons:
+                if btn != card_btn:
+                    btn.config(state="disabled")
+            # Display the card in the current_cards_frame
+            rank = card_obj.rank
+            suit = card_obj.suit if card_obj.suit != "Joker" else None
+            img = self.load_card_image(rank, suit, size=(60, 90))
+            if img:
+                self.card_images.append(img)
+                card_label = tk.Label(self.current_cards_frame, image=img, bg="#e0f0e0")
+                card_label._card_obj = card_obj  # Store card_obj for identification
+                card_label.pack(side=tk.LEFT, padx=5)
+            else:
+                card_label = tk.Label(self.current_cards_frame, text=str(card_obj), bg="#e0f0e0")
+                card_label._card_obj = card_obj
+                card_label.pack(side=tk.LEFT, padx=5)
+        
+        # Enable/disable Play Card button based on whether a card is selected
+        if hasattr(self, 'play_card_button'):
+            self.play_card_button.config(state="normal" if self.selected_trick_card else "disabled")
+
+    def submit_trick_card(self):
+        if not self.selected_trick_card:
+            return
+        
+        player = self.players[self.current_player_index]
+        if self.selected_trick_card in player.hand:
+            player.hand.remove(self.selected_trick_card)
+            self.current_trick.append((player, self.selected_trick_card))
+            self.selected_trick_card = None
             self.current_player_index = (self.current_player_index + 1) % 3
             if len(self.current_trick) < 3:
                 self.prompt_next_player_trick()
@@ -487,6 +820,20 @@ class CounterPointGame:
             tk.Label(self.trick_frame, text=f"Trick {self.current_trick_number}", font=("Arial", 12), bg="#e0f0e0").pack(pady=10)
             self.played_cards_frame = tk.Frame(self.trick_frame, bg="#e0f0e0")
             self.played_cards_frame.pack(pady=10, expand=True)
+            self.played_cards_frame.grid_columnconfigure(0, weight=1)
+            self.played_cards_frame.grid_columnconfigure(1, weight=1)
+            self.played_cards_frame.grid_columnconfigure(2, weight=1)
+            self.played_cards_frame.grid_rowconfigure(0, weight=1)
+            
+            self.left_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+            self.left_frame.grid(row=0, column=0, sticky="n")
+            
+            self.current_cards_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+            self.current_cards_frame.grid(row=0, column=1, sticky="n")
+            
+            self.right_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+            self.right_frame.grid(row=0, column=2, sticky="n")
+            
             self.prompt_next_player_trick()
         else:
             self.score_round()
@@ -561,6 +908,7 @@ class CounterPointGame:
             "- Card suits represent bid value:\n"
             "    ♦ = 0, ♠ = 10, ♥ = 20, ♣ = 30\n"
             "- Players take 9 tricks\n"
+            "- You must follow the suit of the first card played if you have it\n"
             "- Win tricks and get points based on your bid accuracy\n"
             "- Game ends when a player reaches target score or max rounds\n"
         )
