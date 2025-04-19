@@ -67,6 +67,7 @@ class CounterPointGame:
         self.root.title("CounterPoint")
         self.root.geometry("1200x800")
         self.root.minsize(1000, 700)
+        self.root.configure(bg="#194c22")  # Set main background color
         self.card_images = []
         self.player_names = ["Player 1", "Player 2", "Player 3"]
         self.players = []
@@ -94,14 +95,12 @@ class CounterPointGame:
             widget.destroy()
             
         # Create a frame to hold the background and buttons
-        main_frame = tk.Frame(self.root)
+        main_frame = tk.Frame(self.root, bg="#194c22")  # Match main background
         main_frame.pack(fill=tk.BOTH, expand=True)
-        main_frame.configure(bg="White")  # Use system default for pseudo-transparency
         
         # Create a label for the background image
-        bg_label = tk.Label(main_frame)
+        bg_label = tk.Label(main_frame, bg="#194c22")
         bg_label.place(relx=0.5, rely=0.5, anchor="center")
-        bg_label.configure(bg="White")
         
         def resize_background(event=None):
             try:
@@ -121,9 +120,9 @@ class CounterPointGame:
             except Exception as e:
                 print(f"Error loading background.png: {e}")
             if main_frame.winfo_exists():
-                main_frame.configure(bg="#f8f8f8")
+                main_frame.configure(bg="#194c22")
             if bg_label.winfo_exists():
-                bg_label.configure(bg="#f8f8f8")
+                bg_label.configure(bg="#194c22")
         
         # Configure buttons with custom color
         button_style = {"font": ("Arial", 14), "bg": "#f5e1bf", "width": 15, "height": 2}
@@ -133,31 +132,31 @@ class CounterPointGame:
         tk.Button(main_frame, text="Exit", command=self.root.destroy, **button_style).place(relx=0.5, rely=0.6, anchor="center")
         
         # Load initial background
-        self.root.after(100, resize_background)
+        self.root.after(30, resize_background)
 
     def get_game_settings(self):
         self.current_phase = "player_names"
         for widget in self.root.winfo_children():
             widget.destroy()
             
-        names_frame = tk.Frame(self.root)
+        names_frame = tk.Frame(self.root, bg="#194c22")
         names_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
-        tk.Label(names_frame, text="Enter Player Names", font=("Arial", 20, "bold")).pack(pady=20)
+        tk.Label(names_frame, text="Enter Player Names", font=("Arial", 20, "bold"), bg="#194c22", fg="white").pack(pady=20)
         
         # Player 1
-        tk.Label(names_frame, text="Choose a name for Player 1:", font=("Arial", 14)).pack(pady=5)
+        tk.Label(names_frame, text="Choose a name for Player 1:", font=("Arial", 14), bg="#194c22", fg="white").pack(pady=5)
         player1_entry = tk.Entry(names_frame, font=("Arial", 14), width=20)
         player1_entry.pack(pady=5)
         player1_entry.focus_set()
         
         # Player 2
-        tk.Label(names_frame, text="Choose a name for Player 2:", font=("Arial", 14)).pack(pady=5)
+        tk.Label(names_frame, text="Choose a name for Player 2:", font=("Arial", 14), bg="#194c22", fg="white").pack(pady=5)
         player2_entry = tk.Entry(names_frame, font=("Arial", 14), width=20)
         player2_entry.pack(pady=5)
         
         # Player 3
-        tk.Label(names_frame, text="Choose a name for Player 3:", font=("Arial", 14)).pack(pady=5)
+        tk.Label(names_frame, text="Choose a name for Player 3:", font=("Arial", 14), bg="#194c22", fg="white").pack(pady=5)
         player3_entry = tk.Entry(names_frame, font=("Arial", 14), width=20)
         player3_entry.pack(pady=5)
         
@@ -169,23 +168,23 @@ class CounterPointGame:
             self.show_win_condition_screen()
         
         tk.Button(names_frame, text="Continue", font=("Arial", 14),
-                  command=submit_names, width=15, height=2).pack(pady=20)
+                  command=submit_names, bg="#f5e1bf", width=15, height=2).pack(pady=20)
 
     def show_win_condition_screen(self):
         self.current_phase = "win_condition"
         for widget in self.root.winfo_children():
             widget.destroy()
             
-        win_frame = tk.Frame(self.root)
+        win_frame = tk.Frame(self.root, bg="#194c22")
         win_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
-        tk.Label(win_frame, text="Choose Winning Condition", font=("Arial", 20, "bold")).pack(pady=20)
+        tk.Label(win_frame, text="Choose Winning Condition", font=("Arial", 20, "bold"), bg="#194c22", fg="white").pack(pady=20)
         
         tk.Button(win_frame, text="Target Score", font=("Arial", 14),
-                  command=lambda: self.set_win_condition(1), width=15, height=2).pack(pady=10)
+                  command=lambda: self.set_win_condition(1), bg="#f5e1bf", width=15, height=2).pack(pady=10)
         
         tk.Button(win_frame, text="Set Rounds", font=("Arial", 14),
-                  command=lambda: self.set_win_condition(2), width=15, height=2).pack(pady=10)
+                  command=lambda: self.set_win_condition(2), bg="#f5e1bf", width=15, height=2).pack(pady=10)
 
     def set_win_condition(self, condition):
         self.win_condition = condition
@@ -193,12 +192,12 @@ class CounterPointGame:
         for widget in self.root.winfo_children():
             widget.destroy()
             
-        input_frame = tk.Frame(self.root)
+        input_frame = tk.Frame(self.root, bg="#194c22")
         input_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
         if condition == 1:
-            tk.Label(input_frame, text="Enter Target Score", font=("Arial", 20, "bold")).pack(pady=20)
-            tk.Label(input_frame, text="Enter a positive number", font=("Arial", 14)).pack(pady=5)
+            tk.Label(input_frame, text="Enter Target Score", font=("Arial", 20, "bold"), bg="#194c22", fg="white").pack(pady=20)
+            tk.Label(input_frame, text="Enter a positive number", font=("Arial", 14), bg="#194c22", fg="white").pack(pady=5)
             
             score_entry = tk.Entry(input_frame, font=("Arial", 14), width=10)
             score_entry.pack(pady=10)
@@ -216,14 +215,14 @@ class CounterPointGame:
                     messagebox.showerror("Error", "Please enter a valid number.")
             
             tk.Button(input_frame, text="Submit", font=("Arial", 14),
-                      command=submit_score, width=15, height=2).pack(pady=10)
+                      command=submit_score, bg="#f5e1bf", width=15, height=2).pack(pady=10)
             
             tk.Button(input_frame, text="Back", font=("Arial", 14),
-                      command=self.show_win_condition_screen, width=15, height=2).pack(pady=10)
+                      command=self.show_win_condition_screen, bg="#f5e1bf", width=15, height=2).pack(pady=10)
             
         elif condition == 2:
-            tk.Label(input_frame, text="Enter Number of Rounds", font=("Arial", 20, "bold")).pack(pady=20)
-            tk.Label(input_frame, text="Enter 1 or a number divisible by 3", font=("Arial", 14)).pack(pady=5)
+            tk.Label(input_frame, text="Enter Number of Rounds", font=("Arial", 20, "bold"), bg="#194c22", fg="white").pack(pady=20)
+            tk.Label(input_frame, text="Enter 1 or a number divisible by 3", font=("Arial", 14), bg="#194c22", fg="white").pack(pady=5)
             
             rounds_entry = tk.Entry(input_frame, font=("Arial", 14), width=10)
             rounds_entry.pack(pady=10)
@@ -241,10 +240,10 @@ class CounterPointGame:
                     messagebox.showerror("Error", "Please enter a valid number.")
             
             tk.Button(input_frame, text="Submit", font=("Arial", 14),
-                      command=submit_rounds, width=15, height=2).pack(pady=10)
+                      command=submit_rounds, bg="#f5e1bf", width=15, height=2).pack(pady=10)
             
             tk.Button(input_frame, text="Back", font=("Arial", 14),
-                      command=self.show_win_condition_screen, width=15, height=2).pack(pady=10)
+                      command=self.show_win_condition_screen, bg="#f5e1bf", width=15, height=2).pack(pady=10)
 
     def initialize_game(self):
         self.players = [Player(name) for name in self.player_names]
@@ -272,29 +271,29 @@ class CounterPointGame:
         for widget in self.root.winfo_children():
             widget.destroy()
             
-        trump_frame = tk.Frame(self.root)
+        trump_frame = tk.Frame(self.root, bg="#194c22")
         trump_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
-        tk.Label(trump_frame, text=f"Round {self.current_round} - Trump Card", font=("Arial", 20, "bold")).pack(pady=20)
+        tk.Label(trump_frame, text=f"Round {self.current_round} - Trump Card", font=("Arial", 20, "bold"), bg="#194c22", fg="white").pack(pady=20)
         
         rank = self.trump_card.rank
         suit = self.trump_card.suit if self.trump_card.suit != "Joker" else None
         
-        card_frame = tk.Frame(trump_frame)
+        card_frame = tk.Frame(trump_frame, bg="#194c22")
         card_frame.pack(pady=20)
         
         img = self.load_card_image(rank, suit, size=(100, 150))
         if img:
             self.card_images.append(img)
-            tk.Label(card_frame, image=img).pack()
+            tk.Label(card_frame, image=img, bg="#194c22").pack()
         else:
             tk.Label(card_frame, text=str(self.trump_card), width=10, height=15, relief="raised", bg="white", font=("Arial", 12)).pack()
         
         info_text = "No trump suit this round!" if (rank == "Nine" or rank == "Joker") else f"The trump suit is: {suit.upper()}"
-        tk.Label(trump_frame, text=info_text, font=("Arial", 16)).pack(pady=20)
+        tk.Label(trump_frame, text=info_text, font=("Arial", 16), bg="#194c22", fg="white").pack(pady=20)
         
         tk.Button(trump_frame, text="Start Bidding", font=("Arial", 14),
-                  command=self.setup_bidding_phase, width=15, height=2).pack(pady=20)
+                  command=self.setup_bidding_phase, bg="#f5e1bf", width=15, height=2).pack(pady=20)
 
     def setup_bidding_phase(self):
         self.current_phase = "bidding"
@@ -306,12 +305,12 @@ class CounterPointGame:
     def setup_game_ui(self):
         for widget in self.root.winfo_children():
             widget.destroy()
-            
+
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=3)
         self.root.grid_rowconfigure(2, weight=2)
-            
+
         menu_bar = tk.Menu(self.root)
         game_menu = tk.Menu(menu_bar, tearoff=0)
         game_menu.add_command(label="New Game", command=self.get_game_settings)
@@ -323,75 +322,115 @@ class CounterPointGame:
         menu_bar.add_cascade(label="Help", menu=help_menu)
         self.root.config(menu=menu_bar)
 
-        self.top_frame = tk.Frame(self.root, bg="#e0e0e0", padx=10, pady=5)
+        self.top_frame = tk.Frame(self.root, bg="#ab3a11", padx=10, pady=5)  # Scores tab color
         self.top_frame.grid(row=0, column=0, sticky="ew")
-        
-        self.center_frame = tk.Frame(self.root, bg="#f8f8f8", padx=10, pady=10)
+
+        self.center_frame = tk.Frame(self.root, bg="#194c22", padx=10, pady=10)  # Main background color
         self.center_frame.grid(row=1, column=0, sticky="nsew")
-        
-        self.bottom_frame = tk.Frame(self.root, bg="#e8e8e8", padx=10, pady=10)
+
+        self.bottom_frame = tk.Frame(self.root, bg="#ab3a11", padx=10, pady=10)  # Player's hand bar color
         self.bottom_frame.grid(row=2, column=0, sticky="ew")
 
-        tk.Label(self.bottom_frame, text=f"{self.player_names[self.current_player_index]}'s Hand", 
-                 font=("Arial", 12, "bold"), bg="#e8e8e8").pack(pady=5)
+        tk.Label(self.bottom_frame, text=f"{self.players[self.current_player_index].name}'s Hand",
+                 font=("Arial", 12, "bold"), bg="#ab3a11", fg="white").pack(pady=5)
 
         self.update_scores()
-        
-        trump_frame = tk.Frame(self.center_frame, bg="#f8f8f8", padx=5, pady=5)
+
+        trump_frame = tk.Frame(self.center_frame, bg="#194c22", padx=5, pady=5)
         trump_frame.pack(pady=10)
-        
+
         rank = self.trump_card.rank
         suit = self.trump_card.suit if self.trump_card.suit != "Joker" else None
-        tk.Label(trump_frame, text="Trump Card:", font=("Arial", 14), bg="#f8f8f8").pack(side="left", padx=5)
-        
+        tk.Label(trump_frame, text="Trump Card:", font=("Arial", 14), bg="#194c22", fg="white").pack(side="left", padx=5)
+
         img = self.load_card_image(rank, suit, size=(60, 90))
         if img:
             self.card_images.append(img)
-            tk.Label(trump_frame, image=img, bg="#f8f8f8").pack(side="left")
+            tk.Label(trump_frame, image=img, bg="#194c22").pack(side="left")
         else:
             tk.Label(trump_frame, text=str(self.trump_card), width=5, height=7, relief="raised", bg="white").pack(side="left")
-        
+
         info_text = "No Trump Suit" if (rank == "Nine" or rank == "Joker") else f"Trump Suit: {suit.upper()}"
-        tk.Label(self.center_frame, text=info_text, font=("Arial", 14), bg="#f8f8f8").pack(pady=5)
-        
-        self.turn_label = tk.Label(self.center_frame, text=f"Turn: {self.player_names[self.current_player_index]}", 
-                                  font=("Arial", 16, "bold"), fg="blue", bg="#f8f8f8")
+        tk.Label(self.center_frame, text=info_text, font=("Arial", 14), bg="#194c22", fg="white").pack(pady=5)
+
+        self.turn_label = tk.Label(self.center_frame, text=f"Turn: {self.players[self.current_player_index].name}",
+                                 font=("Arial", 16, "bold"), fg="white", bg="#194c22")
         self.turn_label.pack(pady=10)
-        
-        self.trick_frame = tk.Frame(self.center_frame, bg="#e0f0e0", width=300, height=200, relief=tk.GROOVE, bd=2)
+
+        self.trick_frame = tk.Frame(self.center_frame, bg="#194c22", width=300, height=200, relief=tk.FLAT, bd=0)
         self.trick_frame.pack(pady=20, fill=tk.BOTH, expand=True)
         self.trick_frame.pack_propagate(False)
-        
-        trick_label_text = "Selected Cards" if self.current_phase == "bidding" else f"Trick {self.current_trick_number}"
-        tk.Label(self.trick_frame, text=trick_label_text, font=("Arial", 12), bg="#e0f0e0").pack(pady=5)
-        
-        self.played_cards_frame = tk.Frame(self.trick_frame, bg="#e0f0e0")
+
+        self.played_cards_frame = tk.Frame(self.trick_frame, bg="#194c22")
         self.played_cards_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Load and apply wood texture to played_cards_frame
+        try:
+            folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+            texture_path = os.path.join(folder_path, "wood_texture.jpg")
+            if os.path.exists(texture_path):
+                texture_img = Image.open(texture_path)
+                # Resize to fit played_cards_frame (initially use trick_frame size as approximation)
+                texture_img = texture_img.resize((300, 180), Image.Resampling.LANCZOS)
+                self.trick_texture = ImageTk.PhotoImage(texture_img)
+                self.card_images.append(self.trick_texture)  # Store to prevent garbage collection
+                self.texture_label = tk.Label(self.played_cards_frame, image=self.trick_texture)
+                self.texture_label.place(x=0, y=0, relwidth=1, relheight=1)  # Cover entire frame
+                self.texture_label.lower()  # Ensure texture is behind other widgets
+            else:
+                print(f"Wood texture not found at {texture_path}, using default background")
+                self.played_cards_frame.configure(bg="#194c22")
+        except Exception as e:
+            print(f"Error loading wood texture: {e}")
+            self.played_cards_frame.configure(bg="#194c22")
+
+        # Place the trick label directly on the wood texture
+        trick_label_text = "Selected Cards" if self.current_phase == "bidding" else f"Trick {self.current_trick_number}"
+        self.trick_label = tk.Label(self.played_cards_frame, text=trick_label_text, font=("Arial", 12), bg="#57311a", fg="white")
+        self.trick_label.place(relx=0.5, rely=0, anchor="n", y=5)
+
+        # Dynamic resizing of texture
+        def resize_trick_texture(event):
+            try:
+                folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+                texture_path = os.path.join(folder_path, "wood_texture.jpg")
+                if os.path.exists(texture_path):
+                    texture_img = Image.open(texture_path)
+                    # Resize to current played_cards_frame size
+                    frame_width = max(event.width, 1)
+                    frame_height = max(event.height, 1)
+                    texture_img = texture_img.resize((frame_width, frame_height), Image.Resampling.LANCZOS)
+                    self.trick_texture = ImageTk.PhotoImage(texture_img)
+                    self.card_images.append(self.trick_texture)  # Store to prevent garbage collection
+                    if self.texture_label and self.texture_label.winfo_exists():
+                        self.texture_label.configure(image=self.trick_texture)
+            except Exception as e:
+                print(f"Error resizing wood texture: {e}")
+
+        self.played_cards_frame.bind("<Configure>", resize_trick_texture)
+
         self.played_cards_frame.grid_columnconfigure(0, weight=1)
-        self.played_cards_frame.grid_columnconfigure(1, weight=1)
         self.played_cards_frame.grid_columnconfigure(2, weight=1)
         self.played_cards_frame.grid_rowconfigure(0, weight=1)
 
-        # Create sub-frames for left, center, and right
-        self.left_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+        self.left_frame = tk.Frame(self.played_cards_frame, bg="#57311a")
         self.left_frame.grid(row=0, column=0, sticky="n")
-        
-        self.current_cards_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
-        self.current_cards_frame.grid(row=0, column=1, sticky="n")
-        
-        self.right_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+
+        self.right_frame = tk.Frame(self.played_cards_frame, bg="#57311a")
         self.right_frame.grid(row=0, column=2, sticky="n")
 
-        # Display previous players' bid or trick cards
+        self.current_cards_frame = tk.Frame(self.played_cards_frame, bg="#57311a")
+        self.current_cards_frame.place(relx=0.5, rely=0, anchor="n", y=30)
+
         if self.current_phase == "bidding":
             for i in range(self.current_player_index):
                 player_name = self.player_names[i]
                 if player_name in self.bid_cards:
                     target_frame = self.left_frame if i == 0 else self.right_frame
-                    frame = tk.Frame(target_frame, bg="#e0f0e0")
+                    frame = tk.Frame(target_frame, bg="#57311a")
                     frame.pack(pady=5)
-                    tk.Label(frame, text=f"{player_name}'s Bid", font=("Arial", 10), bg="#e0f0e0").pack()
-                    cards_frame = tk.Frame(frame, bg="#e0f0e0")
+                    tk.Label(frame, text=f"{player_name}'s Bid", font=("Arial", 10), bg="#57311a", fg="white").pack()
+                    cards_frame = tk.Frame(frame, bg="#57311a")
                     cards_frame.pack()
                     for card in self.bid_cards[player_name]:
                         rank = card.rank
@@ -399,24 +438,24 @@ class CounterPointGame:
                         img = self.load_card_image(rank, suit, size=(60, 90))
                         if img:
                             self.card_images.append(img)
-                            tk.Label(cards_frame, image=img, bg="#e0f0e0").pack(side=tk.LEFT, padx=2)
+                            tk.Label(cards_frame, image=img, bg="#57311a").pack(side=tk.LEFT, padx=2)
                         else:
-                            tk.Label(cards_frame, text=str(card), bg="#e0f0e0").pack(side=tk.LEFT, padx=2)
+                            tk.Label(cards_frame, text=str(card), bg="#57311a", fg="white").pack(side=tk.LEFT, padx=2)
         elif self.current_phase == "trick":
             for i, (player, card) in enumerate(self.current_trick):
                 player_name = player.name
                 target_frame = self.left_frame if i == 0 else self.right_frame
-                frame = tk.Frame(target_frame, bg="#e0f0e0")
+                frame = tk.Frame(target_frame, bg="#57311a")
                 frame.pack(pady=5)
-                tk.Label(frame, text=f"{player_name}'s Card", font=("Arial", 10), bg="#e0f0e0").pack()
+                tk.Label(frame, text=f"{player_name}'s Card", font=("Arial", 10), bg="#57311a", fg="white").pack()
                 rank = card.rank
                 suit = card.suit if card.suit != "Joker" else None
                 img = self.load_card_image(rank, suit, size=(60, 90))
                 if img:
                     self.card_images.append(img)
-                    tk.Label(frame, image=img, bg="#e0f0e0").pack(pady=2)
+                    tk.Label(frame, image=img, bg="#57311a").pack(pady=2)
                 else:
-                    tk.Label(frame, text=str(card), bg="#e0f0e0").pack(pady=2)
+                    tk.Label(frame, text=str(card), bg="#57311a", fg="white").pack(pady=2)
 
         self.update_player_hand()
         if self.current_phase == "bidding":
@@ -430,14 +469,19 @@ class CounterPointGame:
                       f"{self.player_names[2]}: {self.players[2].score}"
         for widget in self.top_frame.winfo_children():
             widget.destroy()
-        tk.Label(self.top_frame, text=scores_text, font=("Arial", 14, "bold"), bg="#e0e0e0").pack(pady=10)
+        tk.Label(self.top_frame, text=scores_text, font=("Arial", 14, "bold"), bg="#ab3a11", fg="white").pack(pady=10)
 
     def update_player_hand(self):
+        # Clear all widgets in bottom_frame
         for widget in self.bottom_frame.winfo_children():
-            if widget != self.bottom_frame.winfo_children()[0]:
-                widget.destroy()
+            widget.destroy()
         
+        # Update the label to show the current player's hand
         player = self.players[self.current_player_index]
+        tk.Label(self.bottom_frame, text=f"{player.name}'s Hand",
+                 font=("Arial", 12, "bold"), bg="#ab3a11", fg="white").pack(pady=5)
+        
+        # Display the player's cards
         hand = [(card.rank, card.suit if card.suit != "Joker" else None, card) for card in player.hand]
         self.card_buttons = []  # Store card buttons for enabling/disabling
         self.create_scrollable_cards(self.bottom_frame, hand, vertical=False, interactive=True)
@@ -445,33 +489,48 @@ class CounterPointGame:
         if self.current_phase == "bidding":
             # Add Submit Bid button to the right of the cards
             self.submit_bid_button = tk.Button(self.bottom_frame, text="Submit Bid", font=("Arial", 12),
-                                               command=self.submit_bid, width=15, height=2, state="disabled")
+                                               command=self.submit_bid, bg="#f5e1bf", width=15, height=2, state="disabled")
             self.submit_bid_button.pack(side=tk.RIGHT, padx=10)
         elif self.current_phase == "trick":
             # Add Play Card button to the right of the cards
             self.play_card_button = tk.Button(self.bottom_frame, text="Play Card", font=("Arial", 12),
-                                              command=self.submit_trick_card, width=15, height=2, state="disabled")
+                                              command=self.submit_trick_card, bg="#f5e1bf", width=15, height=2, state="disabled")
             self.play_card_button.pack(side=tk.RIGHT, padx=10)
 
     def create_scrollable_cards(self, parent, cards, vertical=False, interactive=False):
-        canvas_frame = tk.Frame(parent)
-        canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        canvas = tk.Canvas(canvas_frame)
-        
-        if vertical:
-            scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            canvas.configure(yscrollcommand=scrollbar.set)
+        if parent == self.bottom_frame:
+            # For the player's hand, use a simple frame without canvas or scrollbar
+            cards_frame = tk.Frame(parent, bg="#ab3a11")
+            cards_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         else:
-            scrollbar = ttk.Scrollbar(canvas_frame, orient="horizontal", command=canvas.xview)
-            scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
-            canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-            canvas.configure(xscrollcommand=scrollbar.set)
+            # For other cases, use the original canvas and scrollbar (though not used in current code)
+            canvas_frame = tk.Frame(parent, bg="#194c22")
+            canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
             
-        cards_frame = tk.Frame(canvas)
-        canvas_window = canvas.create_window((0, 0), window=cards_frame, anchor="nw")
+            canvas = tk.Canvas(canvas_frame, bg="#194c22")
+            
+            if vertical:
+                scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
+                scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+                canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+                canvas.configure(yscrollcommand=scrollbar.set)
+            else:
+                scrollbar = ttk.Scrollbar(canvas_frame, orient="horizontal", command=canvas.xview)
+                scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+                canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+                canvas.configure(xscrollcommand=scrollbar.set)
+                
+            cards_frame = tk.Frame(canvas, bg="#194c22")
+            canvas.create_window((0, 0), window=cards_frame, anchor="nw")
+            
+            def configure_canvas(event):
+                canvas.configure(scrollregion=canvas.bbox("all"))
+                if vertical:
+                    canvas.configure(width=cards_frame.winfo_reqwidth())
+                else:
+                    canvas.configure(height=cards_frame.winfo_reqheight())
+            
+            cards_frame.bind("<Configure>", configure_canvas)
         
         def on_card_click(card_btn, card_obj):
             if self.current_phase == "bidding":
@@ -484,7 +543,7 @@ class CounterPointGame:
             if img:
                 self.card_images.append(img)
                 if interactive:
-                    card_btn = tk.Button(cards_frame, image=img, relief="raised")
+                    card_btn = tk.Button(cards_frame, image=img, relief="raised", bg="#f5e1bf")
                     card_btn.config(command=lambda b=card_btn, c=card_obj: on_card_click(b, c))
                     card_btn._card_obj = card_obj  # Store card_obj for identification
                     self.card_buttons.append(card_btn)  # Store button for enabling/disabling
@@ -493,7 +552,7 @@ class CounterPointGame:
                     else:
                         card_btn.pack(side=tk.LEFT, padx=2)
                 else:
-                    lbl = tk.Label(cards_frame, image=img)
+                    lbl = tk.Label(cards_frame, image=img, bg="#ab3a11" if parent == self.bottom_frame else "#194c22")
                     if vertical:
                         lbl.pack(pady=2)
                     else:
@@ -508,19 +567,11 @@ class CounterPointGame:
                 else:
                     placeholder.pack(side=tk.LEFT, padx=2)
         
-        def configure_canvas(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
+        if parent != self.bottom_frame:
             if vertical:
-                canvas.configure(width=cards_frame.winfo_reqwidth())
+                cards_frame.config(width=100)
             else:
-                canvas.configure(height=cards_frame.winfo_reqheight())
-        
-        cards_frame.bind("<Configure>", configure_canvas)
-        
-        if vertical:
-            cards_frame.config(width=100)
-        else:
-            cards_frame.config(height=110)
+                cards_frame.config(height=110)
 
     def load_card_image(self, rank, suit, size=(60, 90)):
         try:
@@ -570,7 +621,7 @@ class CounterPointGame:
             # Deselect the card
             self.discarded_cards.remove(card_obj)
             self.discard_count -= 1
-            card_btn.config(relief="raised", bg="SystemButtonFace")
+            card_btn.config(relief="raised", bg="#f5e1bf")
             # Remove the card from the current_cards_frame
             for widget in self.current_cards_frame.winfo_children():
                 if hasattr(widget, "_card_obj") and widget._card_obj == card_obj:
@@ -587,11 +638,11 @@ class CounterPointGame:
                 img = self.load_card_image(rank, suit, size=(60, 90))
                 if img:
                     self.card_images.append(img)
-                    card_label = tk.Label(self.current_cards_frame, image=img, bg="#e0f0e0")
+                    card_label = tk.Label(self.current_cards_frame, image=img, bg="#57311a")
                     card_label._card_obj = card_obj  # Store card_obj for identification
                     card_label.pack(side=tk.LEFT, padx=5)
                 else:
-                    card_label = tk.Label(self.current_cards_frame, text=str(card_obj), bg="#e0f0e0")
+                    card_label = tk.Label(self.current_cards_frame, text=str(card_obj), bg="#57311a", fg="white")
                     card_label._card_obj = card_obj
                     card_label.pack(side=tk.LEFT, padx=5)
         
@@ -619,41 +670,39 @@ class CounterPointGame:
         self.current_player_index += 1
         if self.current_player_index < 3:
             next_player = self.players[self.current_player_index]
-            message = f"{player.name} bid {bid_value} points.\nPlease pass to {next_player.name} to bid."
-            self.show_custom_dialog("Bid Result", message, lambda: self.prompt_next_player())
+            message = f"{player.name} bid {bid_value} points."
+            pass_message = f"Please pass to {next_player.name} to bid."
+            self.show_bid_result_prompt(message, pass_message, self.prompt_next_player)
         else:
             message = f"{player.name} bid {bid_value} points."
-            self.show_custom_dialog("Bid Result", message, lambda: self.start_trick_phase())
+            pass_message = "Bidding complete. Starting trick phase."
+            self.show_bid_result_prompt(message, pass_message, self.start_trick_phase)
+
+    def show_bid_result_prompt(self, bid_message, pass_message, on_continue):
+        self.current_phase = "bid_result_prompt"
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        prompt_frame = tk.Frame(self.root, bg="#194c22")
+        prompt_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
+        tk.Label(prompt_frame, text="Bid Result", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=20)
+        tk.Label(prompt_frame, text=bid_message, font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=10)
+        tk.Label(prompt_frame, text=pass_message, font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=20)
+        
+        tk.Button(prompt_frame, text="Continue", font=("Arial", 14),
+                  command=on_continue, bg="#f5e1bf", width=15, height=2).pack(pady=30)
 
     def prompt_next_player(self):
+        self.current_phase = "bidding"  # Ensure the phase is set to bidding for the next player
         self.setup_game_ui()
-
-    def show_custom_dialog(self, title, message, on_close):
-        dialog = tk.Toplevel(self.root)
-        dialog.title(title)
-        dialog.geometry("300x150")
-        dialog.transient(self.root)
-        dialog.grab_set()
-        
-        # Center the dialog relative to the root window
-        dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
-        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
-        dialog.geometry(f"+{x}+{y}")
-        
-        tk.Label(dialog, text=message, font=("Arial", 12), wraplength=250).pack(pady=20)
-        
-        tk.Button(dialog, text="Continue", font=("Arial", 12),
-                  command=lambda: [dialog.destroy(), on_close()]).pack(pady=10)
-        
-        dialog.protocol("WM_DELETE_WINDOW", lambda: [dialog.destroy(), on_close()])
 
     def start_trick_phase(self):
         self.current_phase = "trick"
         self.current_trick_number = 1
         self.current_player_index = 0
         self.current_trick = []
-        self.setup_game_ui()  # This will call handle_trick() too
+        self.setup_game_ui()
 
     def handle_trick(self):
         player = self.players[self.current_player_index]
@@ -706,7 +755,7 @@ class CounterPointGame:
         if card_obj == self.selected_trick_card:
             # Deselect the card
             self.selected_trick_card = None
-            card_btn.config(relief="raised", bg="SystemButtonFace", state="normal")
+            card_btn.config(relief="raised", bg="#f5e1bf", state="normal")
             # Remove the card from the current_cards_frame
             for widget in self.current_cards_frame.winfo_children():
                 if hasattr(widget, "_card_obj") and widget._card_obj == card_obj:
@@ -732,7 +781,7 @@ class CounterPointGame:
                 # Reset the previously selected card's button
                 for btn in self.card_buttons:
                     if hasattr(btn, "_card_obj") and btn._card_obj == self.selected_trick_card:
-                        btn.config(relief="raised", bg="SystemButtonFace", state="normal")
+                        btn.config(relief="raised", bg="#f5e1bf", state="normal")
                 # Clear the current_cards_frame
                 for widget in self.current_cards_frame.winfo_children():
                     if hasattr(widget, "_card_obj") and widget._card_obj == self.selected_trick_card:
@@ -751,11 +800,11 @@ class CounterPointGame:
             img = self.load_card_image(rank, suit, size=(60, 90))
             if img:
                 self.card_images.append(img)
-                card_label = tk.Label(self.current_cards_frame, image=img, bg="#e0f0e0")
+                card_label = tk.Label(self.current_cards_frame, image=img, bg="#57311a")
                 card_label._card_obj = card_obj  # Store card_obj for identification
                 card_label.pack(side=tk.LEFT, padx=5)
             else:
-                card_label = tk.Label(self.current_cards_frame, text=str(card_obj), bg="#e0f0e0")
+                card_label = tk.Label(self.current_cards_frame, text=str(card_obj), bg="#57311a", fg="white")
                 card_label._card_obj = card_obj
                 card_label.pack(side=tk.LEFT, padx=5)
         
@@ -774,14 +823,29 @@ class CounterPointGame:
             self.selected_trick_card = None
             self.current_player_index = (self.current_player_index + 1) % 3
             if len(self.current_trick) < 3:
-                self.prompt_next_player_trick()
+                self.show_next_player_prompt()
             else:
                 self.resolve_trick()
 
-    def prompt_next_player_trick(self):
+    def show_next_player_prompt(self):
+        self.current_phase = "next_player_prompt"
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        prompt_frame = tk.Frame(self.root, bg="#194c22")
+        prompt_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
         next_player = self.players[self.current_player_index]
-        messagebox.showinfo("Next Player", f"Please pass to {next_player.name} to play a card.")
-        self.setup_game_ui()
+        tk.Label(prompt_frame, text=f"Pass to {next_player.name}", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=30)
+        tk.Label(prompt_frame, text="Please pass the device to the next player to play their card.",
+                 font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=20)
+        
+        def on_continue():
+            self.current_phase = "trick"  # Ensure the phase is set to trick for the next player
+            self.setup_game_ui()
+        
+        tk.Button(prompt_frame, text="Continue", font=("Arial", 14),
+                  command=on_continue, bg="#f5e1bf", width=15, height=2).pack(pady=30)
 
     def display_played_card(self, card):
         rank = card.rank
@@ -789,9 +853,9 @@ class CounterPointGame:
         img = self.load_card_image(rank, suit, size=(60, 90))
         if img:
             self.card_images.append(img)
-            tk.Label(self.played_cards_frame, image=img, bg="#e0f0e0").pack(side=tk.LEFT, padx=5)
+            tk.Label(self.played_cards_frame, image=img, bg="#194c22").pack(side=tk.LEFT, padx=5)
         else:
-            tk.Label(self.played_cards_frame, text=str(card), bg="#e0f0e0").pack(side=tk.LEFT, padx=5)
+            tk.Label(self.played_cards_frame, text=str(card), bg="#194c22", fg="white").pack(side=tk.LEFT, padx=5)
 
     def resolve_trick(self):
         lead_suit = self.current_trick[0][1].suit
@@ -817,24 +881,65 @@ class CounterPointGame:
         if self.current_trick_number <= 9:
             for widget in self.trick_frame.winfo_children():
                 widget.destroy()
-            tk.Label(self.trick_frame, text=f"Trick {self.current_trick_number}", font=("Arial", 12), bg="#e0f0e0").pack(pady=10)
-            self.played_cards_frame = tk.Frame(self.trick_frame, bg="#e0f0e0")
+            self.played_cards_frame = tk.Frame(self.trick_frame, bg="#194c22")
             self.played_cards_frame.pack(pady=10, expand=True)
+
+            # Reapply wood texture to played_cards_frame
+            try:
+                folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+                texture_path = os.path.join(folder_path, "wood_texture.jpg")
+                if os.path.exists(texture_path):
+                    texture_img = Image.open(texture_path)
+                    texture_img = texture_img.resize((300, 180), Image.Resampling.LANCZOS)
+                    self.trick_texture = ImageTk.PhotoImage(texture_img)
+                    self.card_images.append(self.trick_texture)  # Store to prevent garbage collection
+                    self.texture_label = tk.Label(self.played_cards_frame, image=self.trick_texture)
+                    self.texture_label.place(x=0, y=0, relwidth=1, relheight=1)
+                    self.texture_label.lower()
+                else:
+                    print(f"Wood texture not found at {texture_path}, using default background")
+                    self.played_cards_frame.configure(bg="#194c22")
+            except Exception as e:
+                print(f"Error loading wood texture: {e}")
+                self.played_cards_frame.configure(bg="#194c22")
+
+            # Place the trick label directly on the wood texture
+            tk.Label(self.played_cards_frame, text=f"Trick {self.current_trick_number}", font=("Arial", 12), bg="#57311a", fg="white").place(relx=0.5, rely=0, anchor="n", y=5)
+
+            # Rebind resize handler
+            def resize_trick_texture(event):
+                try:
+                    folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+                    texture_path = os.path.join(folder_path, "wood_texture.jpg")
+                    if os.path.exists(texture_path):
+                        texture_img = Image.open(texture_path)
+                        frame_width = max(event.width, 1)
+                        frame_height = max(event.height, 1)
+                        texture_img = texture_img.resize((frame_width, frame_height), Image.Resampling.LANCZOS)
+                        self.trick_texture = ImageTk.PhotoImage(texture_img)
+                        self.card_images.append(self.trick_texture)  # Store to prevent garbage collection
+                        if self.texture_label and self.texture_label.winfo_exists():
+                            self.texture_label.configure(image=self.trick_texture)
+                except Exception as e:
+                    print(f"Error resizing wood texture: {e}")
+
+            self.played_cards_frame.bind("<Configure>", resize_trick_texture)
+
             self.played_cards_frame.grid_columnconfigure(0, weight=1)
             self.played_cards_frame.grid_columnconfigure(1, weight=1)
             self.played_cards_frame.grid_columnconfigure(2, weight=1)
             self.played_cards_frame.grid_rowconfigure(0, weight=1)
             
-            self.left_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+            self.left_frame = tk.Frame(self.played_cards_frame, bg="#57311a")
             self.left_frame.grid(row=0, column=0, sticky="n")
             
-            self.current_cards_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
-            self.current_cards_frame.grid(row=0, column=1, sticky="n")
+            self.current_cards_frame = tk.Frame(self.played_cards_frame, bg="#57311a")
+            self.current_cards_frame.place(relx=0.5, rely=0, anchor="n", y=30)
             
-            self.right_frame = tk.Frame(self.played_cards_frame, bg="#e0f0e0")
+            self.right_frame = tk.Frame(self.played_cards_frame, bg="#57311a")
             self.right_frame.grid(row=0, column=2, sticky="n")
             
-            self.prompt_next_player_trick()
+            self.show_next_player_prompt()
         else:
             self.score_round()
 
@@ -872,33 +977,61 @@ class CounterPointGame:
             players_over_target = [player for player in self.players if player.score >= self.target_score]
             if players_over_target:
                 players_over_target.sort(key=lambda p: p.score, reverse=True)
-                if len(players_over_target) > 1 and players_over_target[0].score == players_over_target[1].score:
-                    tied_players = [p.name for p in players_over_target if p.score == players_over_target[0].score]
-                    messagebox.showinfo("Game Over", f"Game ended in a draw between {', '.join(tied_players)} "
-                                        f"with {players_over_target[0].score} points!")
-                else:
-                    winner = players_over_target[0]
-                    messagebox.showinfo("Game Over", f"{winner.name} wins with {winner.score} points!")
                 self.game_over = True
+                self.show_game_over_screen(players_over_target)
         elif self.win_condition == 2 and self.current_round >= self.max_rounds:
             max_score = max(player.score for player in self.players)
             winners = [player for player in self.players if player.score == max_score]
-            if len(winners) > 1:
-                tied_players = [p.name for p in winners]
-                messagebox.showinfo("Game Over", f"After {self.max_rounds} rounds, game ended in a draw between "
-                                    f"{', '.join(tied_players)} with {max_score} points!")
-            else:
-                winner = winners[0]
-                messagebox.showinfo("Game Over", f"After {self.max_rounds} rounds, {winner.name} wins with {winner.score} points!")
             self.game_over = True
+            self.show_game_over_screen(winners)
         
         if not self.game_over:
             self.players.append(self.players.pop(0))
             self.current_round += 1
             messagebox.showinfo("Next Round", f"Next round dealer: {self.players[0].name}\nClick OK to start Round {self.current_round}")
             self.start_round()
+
+    def show_game_over_screen(self, winners):
+        self.current_phase = "game_over"
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        game_over_frame = tk.Frame(self.root, bg="#194c22")
+        game_over_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
+        tk.Label(game_over_frame, text="Game Over!", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=20)
+        
+        # Sort all players by score in descending order
+        sorted_players = sorted(self.players, key=lambda p: p.score, reverse=True)
+        
+        # Check for draw scenarios
+        if len(winners) == 1:
+            # One winner
+            winner = winners[0]
+            second = sorted_players[1]
+            third = sorted_players[2]
+            tk.Label(game_over_frame, text=f"🥇 {winner.name} won with {winner.score} points! 🥇",
+                     font=("Arial", 18), bg="#194c22", fg="white").pack(pady=10)
+            tk.Label(game_over_frame, text=f"🥈 {second.name} was second with {second.score} points. 🥈",
+                     font=("Arial", 16), bg="#194c22", fg="white").pack(pady=10)
+            tk.Label(game_over_frame, text=f"🥉 {third.name} was third with {third.score} points. 🥉",
+                     font=("Arial", 16), bg="#194c22", fg="white").pack(pady=10)
+        elif len(winners) == 2:
+            # Two-way draw for first place
+            tied_names = " and ".join(winner.name for winner in winners)
+            last_player = sorted_players[-1]  # The player who came last
+            tk.Label(game_over_frame, text=f"🎖️ {tied_names} drew for first place with {winners[0].score} points! 🎖️",
+                     font=("Arial", 18), bg="#194c22", fg="white").pack(pady=10)
+            tk.Label(game_over_frame, text=f"{last_player.name} came last with {last_player.score} points.",
+                     font=("Arial", 16), bg="#194c22", fg="white").pack(pady=10)
         else:
-            self.show_welcome_screen()
+            # Three-way draw
+            all_names = ", ".join(player.name for player in sorted_players)
+            tk.Label(game_over_frame, text=f"🎖️ {all_names} all drew with {sorted_players[0].score} points. 🎖️",
+                     font=("Arial", 18), bg="#194c22", fg="white").pack(pady=10)
+        
+        tk.Button(game_over_frame, text="Main Menu", font=("Arial", 14),
+                  command=self.show_welcome_screen, bg="#f5e1bf", width=15, height=2).pack(pady=30)
 
     def show_help(self):
         rules = (
