@@ -21,6 +21,7 @@ class Deck:
     RANKS = ["Ace", "Ten", "King", "Queen", "Jack", "Nine", "Eight", "Seven", "Six"]
     POINT_VALUES = {"Ace": 11, "Ten": 10, "King": 4, "Queen": 3, "Jack": 2,
                     "Nine": 0, "Eight": 0, "Seven": 0, "Six": 0}
+    RANK_ORDER = ["Six", "Seven", "Eight", "Nine", "Jack", "Queen", "King", "Ten", "Ace"]
     
     def __init__(self):
         self.cards = [Card(suit, rank, self.POINT_VALUES[rank]) for suit in self.SUITS for rank in self.RANKS]
@@ -55,6 +56,17 @@ class Player:
         self.bid = None
         self.score = 0
         self.round_score = 0
+        self.scoring_details = {}
+        self.cumulative_stats = {
+            'total_tricks_won': 0,
+            'total_points_won': 0,
+            'total_cards_won': 0,
+            'total_bonus': 0,
+            'bids': [],  # List of (bid, points_won) tuples per round
+            'round_scores': [],  # List of round scores
+            'differences': [],  # List of differences per round
+            'bonuses': []  # List of bonuses per round
+        }
 
     def receive_cards(self, cards):
         """Assign dealt cards to the player."""
@@ -87,6 +99,7 @@ class CounterPointGame:
         self.discarded_cards = []
         self.discard_count = 0
         self.current_trick_number = 1
+        self.cards_won = {}  # Initialize here to ensure it's available
         self.show_welcome_screen()
 
     def show_welcome_screen(self):
@@ -183,7 +196,7 @@ class CounterPointGame:
         tk.Button(win_frame, text="Target Score", font=("Arial", 14),
                   command=lambda: self.set_win_condition(1), bg="#f5e1bf", width=15, height=2).pack(pady=10)
         
-        tk.Button(win_frame, text="Set Rounds", font=("Arial", 14),
+        tk.Button(win_frame, text="Set Deals", font=("Arial", 14),
                   command=lambda: self.set_win_condition(2), bg="#f5e1bf", width=15, height=2).pack(pady=10)
 
     def set_win_condition(self, condition):
@@ -221,7 +234,7 @@ class CounterPointGame:
                       command=self.show_win_condition_screen, bg="#f5e1bf", width=15, height=2).pack(pady=10)
             
         elif condition == 2:
-            tk.Label(input_frame, text="Enter Number of Rounds", font=("Arial", 20, "bold"), bg="#194c22", fg="white").pack(pady=20)
+            tk.Label(input_frame, text="Enter Number of deals", font=("Arial", 20, "bold"), bg="#194c22", fg="white").pack(pady=20)
             tk.Label(input_frame, text="Enter 1 or a number divisible by 3", font=("Arial", 14), bg="#194c22", fg="white").pack(pady=5)
             
             rounds_entry = tk.Entry(input_frame, font=("Arial", 14), width=10)
@@ -235,7 +248,7 @@ class CounterPointGame:
                         self.max_rounds = rounds
                         self.initialize_game()
                     else:
-                        messagebox.showerror("Error", "Number of rounds must be 1 or a positive number divisible by 3.")
+                        messagebox.showerror("Error", "Number of deals must be 1 or a positive number divisible by 3.")
                 except ValueError:
                     messagebox.showerror("Error", "Please enter a valid number.")
             
@@ -247,12 +260,15 @@ class CounterPointGame:
 
     def initialize_game(self):
         self.players = [Player(name) for name in self.player_names]
+        self.current_round = 1  # Reset round count
         self.start_round()
 
     def start_round(self):
         self.current_phase = "setup"
         for player in self.players:
             player.round_score = 0
+            player.hand = []
+            player.bid = None
         self.deck = Deck()
         self.deck.shuffle()
         hands = self.deck.deal(num_players=3, cards_per_player=12)
@@ -260,6 +276,7 @@ class CounterPointGame:
             player.receive_cards(hands[i])
         self.trump_card = self.deck.reveal_trump()
         self.tricks_won = {player.name: 0 for player in self.players}
+        self.cards_won = {player.name: [] for player in self.players}  # Reset cards won per round
         self.bids = {}
         self.current_trick = []
         self.current_trick_number = 1
@@ -827,7 +844,7 @@ class CounterPointGame:
             else:
                 self.resolve_trick()
 
-    def show_next_player_prompt(self):
+    def show_next_player_prompt(self, trick_result=None):
         self.current_phase = "next_player_prompt"
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -836,9 +853,16 @@ class CounterPointGame:
         prompt_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
         next_player = self.players[self.current_player_index]
-        tk.Label(prompt_frame, text=f"Pass to {next_player.name}", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=30)
+        
+        # Display the trick result if provided
+        if trick_result:
+            tk.Label(prompt_frame, text="Trick Result", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=20)
+            tk.Label(prompt_frame, text=trick_result, font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=10)
+        
+        # Display the pass to next player instruction
+        tk.Label(prompt_frame, text=f"Pass to {next_player.name}", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=20)
         tk.Label(prompt_frame, text="Please pass the device to the next player to play their card.",
-                 font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=20)
+                 font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=10)
         
         def on_continue():
             self.current_phase = "trick"  # Ensure the phase is set to trick for the next player
@@ -857,20 +881,37 @@ class CounterPointGame:
         else:
             tk.Label(self.played_cards_frame, text=str(card), bg="#194c22", fg="white").pack(side=tk.LEFT, padx=5)
 
+    def card_strength(self, card, lead_suit, trump_suit):
+        """Returns a tuple (priority, rank_index) to determine card strength."""
+        priority = 0
+        rank_index = Deck.RANK_ORDER.index(card.rank) if card.rank in Deck.RANK_ORDER else -1  # Joker has lowest rank
+
+        if trump_suit and card.suit == trump_suit:
+            priority = 2  # Trump cards have highest priority
+        elif card.suit == lead_suit:
+            priority = 1  # Lead suit cards have next priority
+
+        return (priority, rank_index)
+
     def resolve_trick(self):
-        lead_suit = self.current_trick[0][1].suit
-        highest_card = self.current_trick[0]
-        
-        for player, card in self.current_trick[1:]:
-            if card.suit == lead_suit and card.point_value > highest_card[1].point_value:
-                highest_card = (player, card)
-            elif self.trump_card and card.suit == self.trump_card.suit and highest_card[1].suit != self.trump_card.suit:
-                highest_card = (player, card)
-        
-        winner = highest_card[0]
+        lead_suit = self.current_trick[0][1].suit if self.current_trick[0][1].suit != "Joker" else None
+        trump_suit = self.trump_card.suit if self.trump_card and self.trump_card.rank not in ["Nine", "Joker"] else None
+
+        # Evaluate each card's strength
+        strengths = [(player, card, self.card_strength(card, lead_suit, trump_suit)) for player, card in self.current_trick]
+        # Find the highest strength card
+        winner_entry = max(strengths, key=lambda x: x[2])  # Compare by strength tuple (priority, rank_index)
+        winner, winning_card = winner_entry[0], winner_entry[1]
+
+        # Update tricks won and cards won
         self.tricks_won[winner.name] += 1
-        messagebox.showinfo("Trick Result", f"{winner.name} wins Trick {self.current_trick_number} with {highest_card[1]}!")
-        
+        # Collect all cards in the trick for the winner
+        for _, card in self.current_trick:
+            self.cards_won[winner.name].append(card)
+
+        # Prepare the trick result message
+        trick_result = f"{winner.name} wins Trick {self.current_trick_number} with {winning_card}!"
+
         self.current_trick_number += 1
         self.current_trick = []
         self.current_player_index = self.players.index(winner)  # Start next trick with winner
@@ -939,30 +980,114 @@ class CounterPointGame:
             self.right_frame = tk.Frame(self.played_cards_frame, bg="#57311a")
             self.right_frame.grid(row=0, column=2, sticky="n")
             
-            self.show_next_player_prompt()
+            # Show the combined prompt with the trick result
+            self.show_next_player_prompt(trick_result=trick_result)
         else:
-            self.score_round()
+            # For the last trick, show the result before proceeding to scoring
+            for widget in self.root.winfo_children():
+                widget.destroy()
+                
+            prompt_frame = tk.Frame(self.root, bg="#194c22")
+            prompt_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+            
+            tk.Label(prompt_frame, text="Trick Result", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=20)
+            tk.Label(prompt_frame, text=trick_result, font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=10)
+            tk.Label(prompt_frame, text="This was the last trick. Proceeding to scoring...",
+                     font=("Arial", 16), bg="#194c22", fg="white", wraplength=400).pack(pady=20)
+            
+            tk.Button(prompt_frame, text="Continue", font=("Arial", 14),
+                      command=self._score_round_without_ui_update, bg="#f5e1bf", width=15, height=2).pack(pady=30)
 
-    def score_round(self):
+    def _score_round_without_ui_update(self):
+        """Helper method to score the round without updating the UI, since the UI is cleared."""
         self.current_phase = "scoring"
-        differences = {}
+        self.differences = {}  # Store differences for score breakdown
         for player in self.players:
+            # Calculate points from cards won
+            points_won = sum(card.point_value for card in self.cards_won[player.name])
             bid = player.bid
-            tricks = self.tricks_won[player.name] * 10
-            differences[player.name] = abs(bid - tricks)
+            self.differences[player.name] = abs(bid - points_won)
         
         for player in self.players:
-            opponent_diffs = [differences[opponent.name] for opponent in self.players if opponent != player]
+            opponent_diffs = [self.differences[opponent.name] for opponent in self.players if opponent != player]
             base_score = sum(opponent_diffs)
             bonus = 0
-            if differences[player.name] == 0:
+            player_points_won = sum(card.point_value for card in self.cards_won[player.name])
+            difference = self.differences[player.name]
+            if difference == 0:
                 bonus = 30
-            elif differences[player.name] <= 2:
+            elif difference <= 2:
                 bonus = 20
-            elif differences[player.name] <= 5:
+            elif difference <= 5:
                 bonus = 10
             player.round_score = base_score + bonus
             player.score += player.round_score
+            # Store scoring details for the current round
+            player.scoring_details = {
+                'base_score': base_score,
+                'bonus': bonus,
+                'points_won': player_points_won,
+                'difference': difference,
+                'num_cards_won': len(self.cards_won[player.name])
+            }
+            # Update cumulative stats
+            player.cumulative_stats['total_tricks_won'] += self.tricks_won[player.name]
+            player.cumulative_stats['total_points_won'] += player_points_won
+            player.cumulative_stats['total_cards_won'] += len(self.cards_won[player.name])
+            player.cumulative_stats['total_bonus'] += bonus
+            player.cumulative_stats['bids'].append((player.bid, player_points_won))  # Use player.bid directly
+            player.cumulative_stats['round_scores'].append(player.round_score)
+            player.cumulative_stats['differences'].append(difference)
+            player.cumulative_stats['bonuses'].append(bonus)
+        
+        # Only show the "Round Result" message if the game will continue (i.e., not the last round)
+        if not (self.win_condition == 2 and self.current_round >= self.max_rounds):
+            round_winner = max(self.players, key=lambda p: p.round_score)
+            messagebox.showinfo("Round Result", f"Round {self.current_round} Complete!\n"
+                                f"Round Winner: {round_winner.name} with {round_winner.round_score} points")
+        
+        self.check_game_over()
+
+    def score_round(self):
+        self.current_phase = "scoring"
+        self.differences = {}  # Store differences for score breakdown
+        for player in self.players:
+            # Calculate points from cards won
+            points_won = sum(card.point_value for card in self.cards_won[player.name])
+            bid = player.bid
+            self.differences[player.name] = abs(bid - points_won)
+        
+        for player in self.players:
+            opponent_diffs = [self.differences[opponent.name] for opponent in self.players if opponent != player]
+            base_score = sum(opponent_diffs)
+            bonus = 0
+            player_points_won = sum(card.point_value for card in self.cards_won[player.name])
+            difference = self.differences[player.name]
+            if difference == 0:
+                bonus = 30
+            elif difference <= 2:
+                bonus = 20
+            elif difference <= 5:
+                bonus = 10
+            player.round_score = base_score + bonus
+            player.score += player.round_score
+            # Store scoring details for the current round
+            player.scoring_details = {
+                'base_score': base_score,
+                'bonus': bonus,
+                'points_won': player_points_won,
+                'difference': difference,
+                'num_cards_won': len(self.cards_won[player.name])
+            }
+            # Update cumulative stats
+            player.cumulative_stats['total_tricks_won'] += self.tricks_won[player.name]
+            player.cumulative_stats['total_points_won'] += player_points_won
+            player.cumulative_stats['total_cards_won'] += len(self.cards_won[player.name])
+            player.cumulative_stats['total_bonus'] += bonus
+            player.cumulative_stats['bids'].append((player.bid, player_points_won))  # Use player.bid directly
+            player.cumulative_stats['round_scores'].append(player.round_score)
+            player.cumulative_stats['differences'].append(difference)
+            player.cumulative_stats['bonuses'].append(bonus)
         
         self.update_scores()
         
@@ -973,17 +1098,21 @@ class CounterPointGame:
         self.check_game_over()
 
     def check_game_over(self):
+        # Always sort players by score to determine winners
+        sorted_players = sorted(self.players, key=lambda p: p.score, reverse=True)
+        max_score = sorted_players[0].score
+        winners = [player for player in sorted_players if player.score == max_score]
+
+        # Check win conditions
         if self.win_condition == 1:
-            players_over_target = [player for player in self.players if player.score >= self.target_score]
-            if players_over_target:
-                players_over_target.sort(key=lambda p: p.score, reverse=True)
+            # Target Score: Game ends when at least one player reaches or exceeds the target
+            if max_score >= self.target_score:
                 self.game_over = True
-                self.show_game_over_screen(players_over_target)
+                self.show_game_over_screen()
         elif self.win_condition == 2 and self.current_round >= self.max_rounds:
-            max_score = max(player.score for player in self.players)
-            winners = [player for player in self.players if player.score == max_score]
+            # Set Deals: Game ends after the specified number of deals
             self.game_over = True
-            self.show_game_over_screen(winners)
+            self.show_game_over_screen()
         
         if not self.game_over:
             self.players.append(self.players.pop(0))
@@ -991,7 +1120,7 @@ class CounterPointGame:
             messagebox.showinfo("Next Round", f"Next round dealer: {self.players[0].name}\nClick OK to start Round {self.current_round}")
             self.start_round()
 
-    def show_game_over_screen(self, winners):
+    def show_game_over_screen(self):
         self.current_phase = "game_over"
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -1003,8 +1132,10 @@ class CounterPointGame:
         
         # Sort all players by score in descending order
         sorted_players = sorted(self.players, key=lambda p: p.score, reverse=True)
+        max_score = sorted_players[0].score
+        winners = [player for player in sorted_players if player.score == max_score]
         
-        # Check for draw scenarios
+        # Display results based on the number of winners
         if len(winners) == 1:
             # One winner
             winner = winners[0]
@@ -1020,32 +1151,125 @@ class CounterPointGame:
             # Two-way draw for first place
             tied_names = " and ".join(winner.name for winner in winners)
             last_player = sorted_players[-1]  # The player who came last
-            tk.Label(game_over_frame, text=f"🎖️ {tied_names} drew for first place with {winners[0].score} points! 🎖️",
+            tk.Label(game_over_frame, text=f"🎖️ {tied_names} tied for first with {winners[0].score} points! 🎖️",
                      font=("Arial", 18), bg="#194c22", fg="white").pack(pady=10)
-            tk.Label(game_over_frame, text=f"{last_player.name} came last with {last_player.score} points.",
+            tk.Label(game_over_frame, text=f"🥉 {last_player.name} was third with {last_player.score} points. 🥉",
                      font=("Arial", 16), bg="#194c22", fg="white").pack(pady=10)
         else:
             # Three-way draw
-            all_names = ", ".join(player.name for player in sorted_players)
-            tk.Label(game_over_frame, text=f"🎖️ {all_names} all drew with {sorted_players[0].score} points. 🎖️",
+            tied_names = ", ".join(winner.name for winner in winners)
+            tk.Label(game_over_frame, text=f"🎖️ {tied_names} tied with {winners[0].score} points! 🎖️",
                      font=("Arial", 18), bg="#194c22", fg="white").pack(pady=10)
+
+        tk.Button(game_over_frame, text="Show Score Breakdown", font=("Arial", 14),
+                  command=self.show_score_breakdown, bg="#f5e1bf", width=20, height=2).pack(pady=20)
         
-        tk.Button(game_over_frame, text="Main Menu", font=("Arial", 14),
-                  command=self.show_welcome_screen, bg="#f5e1bf", width=15, height=2).pack(pady=30)
+        tk.Button(game_over_frame, text="New Game", font=("Arial", 14),
+                  command=self.get_game_settings, bg="#f5e1bf", width=15, height=2).pack(pady=10)
+        
+        tk.Button(game_over_frame, text="Exit", font=("Arial", 14),
+                  command=self.root.destroy, bg="#f5e1bf", width=15, height=2).pack(pady=10)
+
+    def show_score_breakdown(self):
+        self.current_phase = "score_breakdown"
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        breakdown_frame = tk.Frame(self.root, bg="#194c22")
+        breakdown_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
+        tk.Label(breakdown_frame, text="Score Breakdown", font=("Arial", 24, "bold"), bg="#194c22", fg="white").pack(pady=20)
+        
+        # Create a Treeview to display the score breakdown
+        columns = ("Metric", self.players[0].name, self.players[1].name, self.players[2].name)
+        tree = ttk.Treeview(breakdown_frame, columns=columns, show="headings", height=10)
+        
+        # Set column headings
+        tree.heading("Metric", text="Metric")
+        for player in self.players:
+            tree.heading(player.name, text=player.name)
+            tree.column(player.name, width=200, anchor=tk.CENTER)
+        tree.column("Metric", width=150, anchor=tk.W)
+        
+        # Populate the table
+        # Total Score
+        total_scores = [str(player.score) for player in self.players]
+        tree.insert("", "end", values=("Total Score", total_scores[0], total_scores[1], total_scores[2]))
+        
+        # Bidding Results (Bid vs Points Won per round)
+        bidding_results = []
+        for player in self.players:
+            bids_summary = "; ".join(f"R{idx+1}: Bid {bid}, Won {won}" for idx, (bid, won) in enumerate(player.cumulative_stats['bids']))
+            bidding_results.append(bids_summary if bids_summary else "None")
+        tree.insert("", "end", values=("Bidding Results", bidding_results[0], bidding_results[1], bidding_results[2]))
+        
+        # Differences per round
+        differences = []
+        for player in self.players:
+            diff_summary = "; ".join(f"R{idx+1}: {diff}" for idx, diff in enumerate(player.cumulative_stats['differences']))
+            differences.append(diff_summary if diff_summary else "None")
+        tree.insert("", "end", values=("Differences", differences[0], differences[1], differences[2]))
+        
+        # Bonuses per round
+        bonuses = []
+        for player in self.players:
+            bonus_summary = "; ".join(f"R{idx+1}: {bonus}" for idx, bonus in enumerate(player.cumulative_stats['bonuses']))
+            bonuses.append(bonus_summary if bonus_summary else "None")
+        tree.insert("", "end", values=("Bonuses", bonuses[0], bonuses[1], bonuses[2]))
+        
+        # Round Scores
+        round_scores = []
+        for player in self.players:
+            scores_summary = "; ".join(f"R{idx+1}: {score}" for idx, score in enumerate(player.cumulative_stats['round_scores']))
+            round_scores.append(scores_summary if scores_summary else "None")
+        tree.insert("", "end", values=("Round Scores", round_scores[0], round_scores[1], round_scores[2]))
+        
+        # Total Tricks Won
+        tricks_won = [str(player.cumulative_stats['total_tricks_won']) for player in self.players]
+        tree.insert("", "end", values=("Total Tricks Won", tricks_won[0], tricks_won[1], tricks_won[2]))
+        
+        # Total Points from Cards
+        points_won = [str(player.cumulative_stats['total_points_won']) for player in self.players]
+        tree.insert("", "end", values=("Total Points from Cards", points_won[0], points_won[1], points_won[2]))
+        
+        # Total Cards Won
+        cards_won = [str(player.cumulative_stats['total_cards_won']) for player in self.players]
+        tree.insert("", "end", values=("Total Cards Won", cards_won[0], cards_won[1], cards_won[2]))
+        
+        # Total Bonus Points
+        total_bonus = [str(player.cumulative_stats['total_bonus']) for player in self.players]
+        tree.insert("", "end", values=("Total Bonus Points", total_bonus[0], total_bonus[1], total_bonus[2]))
+        
+        # Add a vertical scrollbar
+        scrollbar = ttk.Scrollbar(breakdown_frame, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        tree.pack(side=tk.LEFT, padx=10, pady=10)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        tk.Button(breakdown_frame, text="Back to results", font=("Arial", 14),
+                  command=self.show_game_over_screen, bg="#f5e1bf", width=20, height=2).pack(pady=20)
 
     def show_help(self):
-        rules = (
-            "CounterPoint Game Rules:\n\n"
-            "- 3 players, 37 cards (including Joker)\n"
-            "- Each player discards 3 cards to place a bid\n"
-            "- Card suits represent bid value:\n"
-            "    ♦ = 0, ♠ = 10, ♥ = 20, ♣ = 30\n"
-            "- Players take 9 tricks\n"
-            "- You must follow the suit of the first card played if you have it\n"
-            "- Win tricks and get points based on your bid accuracy\n"
-            "- Game ends when a player reaches target score or max rounds\n"
-        )
-        messagebox.showinfo("Game Rules", rules)
+        messagebox.showinfo("Game Rules", "CounterPoint Rules:\n\n"
+                            "1. The game is played with a deck of 37 cards (standard deck + Joker).\n"
+                            "2. Each player is dealt 12 cards, and the last card is revealed as the trump card.\n"
+                            "3. If the trump card is a Nine or Joker, there is no trump suit for that round.\n"
+                            "4. Bidding Phase: Each player selects 3 cards to discard. The bid is calculated as:\n"
+                            "   - Spades: 10 points each\n"
+                            "   - Hearts: 20 points each\n"
+                            "   - Clubs: 30 points each\n"
+                            "   - Diamonds/Joker: 0 points\n"
+                            "5. Trick Phase: Play 9 tricks. Players must follow suit if possible. The highest card of the lead suit wins, unless a trump card is played.\n"
+                            "6. Scoring:\n"
+                            "   - Points from cards: Ace (11), Ten (10), King (4), Queen (3), Jack (2), others (0).\n"
+                            "   - Base Score: Sum of the differences of the other two players.\n"
+                            "   - Difference: Bid - Points won on tricks (each trick winner gets the 3 cards played during that trick) .\n"
+                            "   - Round Score: Base score + bonus.\n"
+                            "   - Bonus: +30 if difference = 0, +20 if difference ≤ 2, +10 if difference ≤ 5.\n"
+                            "7. Win Conditions:\n"
+                            "   - Target Score: First to reach the target wins.\n"
+                            "   - Set Deals: Player with the highest score after set deals wins.\n"
+                            "8. After each round, the dealer rotates to the player on the left.")
 
     def run(self):
         self.root.mainloop()
